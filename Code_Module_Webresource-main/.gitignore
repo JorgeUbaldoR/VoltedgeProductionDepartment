@@ -1,0 +1,20 @@
+# Node.js
+node_modules/
+
+# TypeScript
+*.js
+*.js.map
+
+# Visual Studio Code
+.vscode/
+
+# Editor-specific files
+*~
+
+# Package files
+package-lock.json
+yarn.lock
+
+# Compiled JavaScript
+dist/
+out/

@@ -1,0 +1,23 @@
+{
+    "compilerOptions": {
+      "moduleResolution": "Node",
+      "noImplicitAny": false,
+      "noEmitOnError": true,
+      "removeComments": false,
+      "alwaysStrict": true,
+      "inlineSourceMap": true,
+      "target": "es2016",
+      "outDir": "Webresources/js",
+      "rootDir": "Webresources/ts"
+    },
+    "compileOnSave": true,
+    "exclude": ["node_modules"],
+    "include": ["Webresources/ts/**/*"]
+  }
+
+  /*
+   "noImplicitAny": false,
+    "noEmitOnError": true,
+    "removeComments": false,
+    "sourceMap": true,
+    "alwaysStrict": true,*/
