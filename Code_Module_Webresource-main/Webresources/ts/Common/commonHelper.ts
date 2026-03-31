@@ -10,4 +10,14 @@ namespace Common.Helper {
       pane.navigate(navigateOptions);
     }
   }
+
+  export async function createAndShowAlertDialog(label: string, text: string, title: string){
+    const alertStrings = {
+      confirmButtonLabel: label,
+      text: text,
+      title: title,
+    };
+
+    await Xrm.Navigation.openAlertDialog(alertStrings);
+  }
 }
