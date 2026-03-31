@@ -20,7 +20,7 @@ namespace CaseReport.Main {
         const formContext = executionContext.getFormContext();
         const complexityAttr = formContext.getAttribute(COMPLEXITY);
         if (!complexityAttr) {
-            console.log("Atributo não encontrado! Nome usado: " + COMPLEXITY);
+            console.log("Atribute not found! Atribute Name Used: " + COMPLEXITY);
             return;
         }
         const complexityStatus = complexityAttr.getValue();
@@ -30,9 +30,9 @@ namespace CaseReport.Main {
            return;
         }else{
              formContext.ui.setFormNotification(
-            'High Complexity Report: This case requires a detailed quality standards review.',
-            'WARNING',
-            'caseReportWarningNotification',
+                'High Complexity Report: This case requires a detailed quality standards review.',
+                'WARNING',
+                'caseReportWarningNotification',
             );
         }
     }
