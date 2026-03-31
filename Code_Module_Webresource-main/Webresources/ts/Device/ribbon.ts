@@ -4,6 +4,7 @@ namespace Device.Ribbon{
     const DEVICE_TABLE = 'vtd_device';
     const DEVICE_STATUS_REASON = 'statuscode';
     const DEVICE_INITIATE_SERVICE_REQUEST = 'vtd_initiatereplacementservicerequest';
+    const DEVICE_UNIQUE_CODE = 'vtd_dxuniquecode';
 
     const DEVICE_STATUS_REASON_TYPES = {
         IN_OPERATION: 1,
@@ -30,8 +31,8 @@ namespace Device.Ribbon{
         const query = '?$select=vtd_initiatereplacementservicerequest';
         const deviceId = formContext.data.entity.getId().replace(/[{}]/g, "");
         const entity = await Xrm.WebApi.retrieveRecord(DEVICE_TABLE,deviceId,query);
-        const initiateServiceRequestValue = entity.vtd_initiatereplacementservicerequest ?? false;
-    
+        const initiateServiceRequestValue = entity.vtd_initiatereplacementservicerequest ?? false;        
+        
         if(initiateServiceRequestValue === true){
             
             await Common.Helper.createAndShowAlertDialog('OK','A request to create a Replacement Service Request is currently being processed. This could take a few minutes to complete.','Replacement Service Request');
@@ -41,8 +42,8 @@ namespace Device.Ribbon{
             Xrm.Utility.showProgressIndicator('Creating Replacement Service Request...');
 
             await updateDeviceInitiateServiceRequestFlag(deviceId);
-            await createReplacementServiceRequest(deviceId);
-            await updateDeviceStatusReason(deviceId);
+            await createReplacementServiceRequest(formContext,deviceId);
+            await updateDeviceStatusReason(formContext,deviceId);
 
             Xrm.Utility.closeProgressIndicator();
             
@@ -51,17 +52,22 @@ namespace Device.Ribbon{
         }
     }
 
-    async function createReplacementServiceRequest(deviceId: string): Promise<void> {
+    async function createReplacementServiceRequest(formContext: Xrm.FormContext, deviceId: string): Promise<void> {
+        const deviceUniqueCode = formContext.getAttribute(DEVICE_UNIQUE_CODE)?.getValue() ?? deviceId;
+        const currentUserName = Xrm.Utility.getGlobalContext().userSettings.userName;
+
         const newServiceRequestData = {
-            'vtd_title': `Replacement Service Request for Device (${deviceId})`, 
+            'vtd_title': `Replacement Service Request for Device (${deviceUniqueCode})`, 
             'vtd_deviceid@odata.bind': `/vtd_devices(${deviceId})`,
-            'vtd_servicetypeid@odata.bind': `/vtd_servicetypes(${SERVICE_TYPE_REPLACEMENT_ID})` 
+            'vtd_servicetypeid@odata.bind': `/vtd_servicetypes(${SERVICE_TYPE_REPLACEMENT_ID})`,
+            'vtd_problemdescription': `A Replacement Service Request has been initiated triggered by user ${currentUserName} for device ${deviceUniqueCode}. Please review the device details and update the service request with any additional information as necessary`,
+            'vtd_solution': `Replacement Service Request for Device (${deviceUniqueCode})`
         };
 
         await Xrm.WebApi.createRecord(SERVICE_TABLE,newServiceRequestData);
     }
 
-    async function updateDeviceStatusReason(deviceId: string): Promise<void>{
+    async function updateDeviceStatusReason(formContext: Xrm.FormContext, deviceId: string): Promise<void>{
         const deviceUpdateData = {
             [DEVICE_STATUS_REASON]: DEVICE_STATUS_REASON_TYPES.AWAITS_REPLACEMENT_REQUEST_APPROVAL
         };
@@ -93,6 +99,19 @@ namespace Device.Ribbon{
     export function OnInitateServiceRequestButtonVisibility(formContext: Xrm.FormContext) : boolean {
         const formType = formContext.ui.getFormType();
 
-        return formType !== 1;
+        // Early return for Create form, as the button should not be visible when creating a new record
+        if(formType === 1){
+            return false;
+        }
+
+        const deviceStatus = formContext.getAttribute(DEVICE_STATUS_REASON);
+
+        if(!deviceStatus){
+            return false;
+        }
+
+        const deviceStatusValue = deviceStatus.getValue();
+
+        return deviceStatusValue !== DEVICE_STATUS_REASON_TYPES.AWAITS_REPLACEMENT_REQUEST_APPROVAL;
     }
 }
