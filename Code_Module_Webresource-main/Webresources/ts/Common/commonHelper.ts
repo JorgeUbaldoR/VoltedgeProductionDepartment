@@ -22,13 +22,30 @@ namespace Common.Helper {
     }
   }
 
-  export async function createAndShowAlertDialog(label: string, text: string, title: string){
+  export async function createAndShowAlertDialog(label: string, text: string, title: string): Promise<string> {
     const alertStrings = {
       confirmButtonLabel: label,
       text: text,
       title: title,
     };
 
-    await Xrm.Navigation.openAlertDialog(alertStrings);
+    return await Xrm.Navigation.openAlertDialog(alertStrings);
   }
+
+/**
+   * Mostra uma notificação no canto do ecrã (Toast).
+   * @param message A mensagem a apresentar.
+   * @param level 1 = Success, 2 = Error, 3 = Warning, 4 = Info (Por defeito é 4)
+   */
+  export async function createAndShowToastNotification(message: string, level: 1 | 2 | 3 | 4 = 4): Promise<string> {
+    
+    const notification = {
+      type: 2, 
+      level: level, 
+      message: message
+    };
+
+    return await Xrm.App.addGlobalNotification(notification);
+  }
+
 }
