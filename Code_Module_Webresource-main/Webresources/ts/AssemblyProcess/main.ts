@@ -106,26 +106,38 @@ namespace AssemblyProcess.Main {
         switch (stageId) {
             case ASSEMBLY_PROCESS_BPF_STAGES.IDENTIFICATION: 
                 formContext.getAttribute(ASSEMBLY_PROCESS_STATUS_REASON)?.setValue(ASSEMBLY_PROCESS_STATUS_REASON_TYPES.IDENTIFICATION);
+                // Fase 1: Mostra a secção 1
                 tab?.sections.get(FORM_SECTIONS.IDENTIFICATION)?.setVisible(true);
                 break;
 
             case ASSEMBLY_PROCESS_BPF_STAGES.EV_CHARGER_PRODUCTION: 
                 formContext.getAttribute(ASSEMBLY_PROCESS_STATUS_REASON)?.setValue(ASSEMBLY_PROCESS_STATUS_REASON_TYPES.EV_CHARGER_PRODUCTION);
+                // Fase 2: Mostra a secção 1 e 2
+                tab?.sections.get(FORM_SECTIONS.IDENTIFICATION)?.setVisible(true);
                 tab?.sections.get(FORM_SECTIONS.EV_CHARGER_PRODUCTION)?.setVisible(true);
                 break;
 
             case ASSEMBLY_PROCESS_BPF_STAGES.BATTERY_PRODUCTION: 
                 formContext.getAttribute(ASSEMBLY_PROCESS_STATUS_REASON)?.setValue(ASSEMBLY_PROCESS_STATUS_REASON_TYPES.BATTERY_PRODUCTION);
+                // Fase 2 (Alternativa): Mostra a secção 1 e 2
+                tab?.sections.get(FORM_SECTIONS.IDENTIFICATION)?.setVisible(true);
                 tab?.sections.get(FORM_SECTIONS.BATTERY_PRODUCTION)?.setVisible(true);
                 break;
 
             case ASSEMBLY_PROCESS_BPF_STAGES.FINAL_ITEM: 
                 formContext.getAttribute(ASSEMBLY_PROCESS_STATUS_REASON)?.setValue(ASSEMBLY_PROCESS_STATUS_REASON_TYPES.FINAL_ITEM);
+                // Fase 3: Mostra a secção 1, 2 e 3
+                tab?.sections.get(FORM_SECTIONS.IDENTIFICATION)?.setVisible(true);
+                tab?.sections.get(FORM_SECTIONS.EV_CHARGER_PRODUCTION)?.setVisible(true); 
                 tab?.sections.get(FORM_SECTIONS.FINAL_ITEM)?.setVisible(true);
                 break;
 
             case ASSEMBLY_PROCESS_BPF_STAGES.CASE_REPORT: 
                 formContext.getAttribute(ASSEMBLY_PROCESS_STATUS_REASON)?.setValue(ASSEMBLY_PROCESS_STATUS_REASON_TYPES.CASE_REPORT);
+                // Fase 4: Mostra a secção 1, 2, 3 e 4 (O ecrã completo)
+                tab?.sections.get(FORM_SECTIONS.IDENTIFICATION)?.setVisible(true);
+                tab?.sections.get(FORM_SECTIONS.EV_CHARGER_PRODUCTION)?.setVisible(true); 
+                tab?.sections.get(FORM_SECTIONS.FINAL_ITEM)?.setVisible(true);
                 tab?.sections.get(FORM_SECTIONS.CASE_REPORT)?.setVisible(true);
                 break;
 
@@ -209,6 +221,7 @@ namespace AssemblyProcess.Main {
         }
 
         const filterFunction = () => {
+
             const assemblyLineField = formContext.getAttribute(DEVICE_ASSEMBLY_LINE_LOOKUP);
             const selectedAssemblyLine = assemblyLineField?.getValue();
 
