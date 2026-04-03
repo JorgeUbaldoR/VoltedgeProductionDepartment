@@ -3,8 +3,14 @@ namespace AssemblyProcess.Main {
     const ASSEMBLY_PROCESS_STATUS_REASON = 'statuscode';
     const INDUSTRIAL_PLANT_ATTRIBUTE = "vtd_industrialplantid";
     const PRODUCT_TYPE_ATTRIBUTE = "vtd_producttypeid";
-    const PRODUCT_TYPE_BPF_CONTROL = "header_process_vtd_producttypeid";
-    const ASSEMBLY_LINE_BPF_CONTROL = "header_process_vtd_assemblylineid";
+    const ASSEMBLY_PROCESS_BATTERYID_LOOKUP = "vtd_batteryid";
+    const ASSEMBLY_PROCESS_CONNECTOR_LOOKUP = "vtd_connectorid";
+
+    const ASSEMBLY_PROCESS_PRODUCT_TYPE_BPF_CONTROL = "header_process_vtd_producttypeid";
+    const ASSEMBLY_PROCESS_BPF_CONTROL = "header_process_vtd_assemblylineid";
+    const ASSEMBLY_PROCESS_DEVICE_BPF_CONTROL = "header_process_vtd_deviceid";
+    const ASSEMBLY_PROCESS_BATTERY_BPF_CONTROL = "header_process_vtd_batteryid"; 
+    const ASSEMBLY_PROCESS_CONNECTOR_BPF_CONTROL = "header_process_vtd_connectorid";
 
     const ASSEMBLY_PROCESS_STATUS_REASON_TYPES = {
         IDENTIFICATION: 953180001,
@@ -34,18 +40,32 @@ namespace AssemblyProcess.Main {
         CASE_REPORT: "tab_general_section_casereport"
     };
 
+
     //Product Type Constants
     const PRODUCT_TYPE_TABLE = 'vtd_producttype';
+
+    const PRODUCT_TYPES_IDS = {
+        BATTERY: 'A1E500F9-8828-F111-8341-000D3A5B9779',
+        EV_CHARGER: '96E85327-8928-F111-8341-000D3A5B9779',
+        CONNECTOR: 'B636C515-8928-F111-8341-000D3A5B9779'
+    }
 
     //Assembly Line Constants
     const ASSEMBLY_LINE_TABLE = 'vtd_assemblyline';
     const ASSEMBLY_LINE_INDUSTRIAL_PLANT_LOOKUP = 'vtd_industrialplantid';
     const ASSEMBLY_LINE_PRODUCT_TYPE_LOOKUP = 'vtd_producttypeid';
 
-    const PRODUCT_TYPES_IDS = {
-        BATTERY: 'A1E500F9-8828-F111-8341-000D3A5B9779',
-        EV_CHARGER: '96E85327-8928-F111-8341-000D3A5B9779'
-    }
+    // Device Constants
+    const DEVICE_TABLE = 'vtd_device'; 
+    const DEVICE_ASSEMBLY_LINE_LOOKUP = "vtd_assemblylineid";
+
+    // Item Constants
+    const ITEM_TABLE = 'vtd_item';
+    const ITEM_PRODUCT_TYPE_LOOKUP = 'vtd_producttypelookupid';
+
+
+
+    // ==================== Event Handlers ====================
 
     export function onLoad(executionContext: Xrm.Events.EventContext): void {
         const formContext = executionContext.getFormContext();
@@ -59,7 +79,9 @@ namespace AssemblyProcess.Main {
 
         applyProductTypeFilter(formContext);
         applyAssemblyLinePlantFilter(formContext);
-
+        applyDeviceFilter(formContext);
+        applyBatteryItemFilter(formContext);
+        applyConnectorItemFilter(formContext);
 
     }
 
@@ -124,7 +146,7 @@ namespace AssemblyProcess.Main {
     }
 
     function applyProductTypeFilter(formContext: Xrm.FormContext): void {
-        const productTypeLookupControl = formContext.getControl(PRODUCT_TYPE_BPF_CONTROL) as Xrm.Controls.LookupControl;
+        const productTypeLookupControl = formContext.getControl(ASSEMBLY_PROCESS_PRODUCT_TYPE_BPF_CONTROL) as Xrm.Controls.LookupControl;
 
         if (!productTypeLookupControl) {
             return;
@@ -144,7 +166,7 @@ namespace AssemblyProcess.Main {
     }
 
     function applyAssemblyLinePlantFilter(formContext: Xrm.FormContext): void {
-        const assemblyLineLookupControl = formContext.getControl(ASSEMBLY_LINE_BPF_CONTROL) as Xrm.Controls.LookupControl;
+        const assemblyLineLookupControl = formContext.getControl(ASSEMBLY_PROCESS_BPF_CONTROL) as Xrm.Controls.LookupControl;
 
         if (!assemblyLineLookupControl) {
             return;
@@ -178,4 +200,75 @@ namespace AssemblyProcess.Main {
         assemblyLineLookupControl.addPreSearch(filterFunction);
     }
 
+
+    function applyDeviceFilter(formContext: Xrm.FormContext): void {
+        const deviceLookupControl = formContext.getControl(ASSEMBLY_PROCESS_DEVICE_BPF_CONTROL) as Xrm.Controls.LookupControl;
+
+        if (!deviceLookupControl) {
+            return;
+        }
+
+        const filterFunction = () => {
+            const assemblyLineField = formContext.getAttribute(DEVICE_ASSEMBLY_LINE_LOOKUP);
+            const selectedAssemblyLine = assemblyLineField?.getValue();
+
+            if (!selectedAssemblyLine || !selectedAssemblyLine[0].id) {
+                return;
+            }
+
+            const assemblyLineId = selectedAssemblyLine[0].id.replace(/[{}]/g, "");
+
+            const fetchXmlFilter = `
+                <filter type="and">
+                    <condition attribute="${DEVICE_ASSEMBLY_LINE_LOOKUP}" operator="eq" value="${assemblyLineId}" />
+                </filter>
+            `;
+
+            deviceLookupControl.addCustomFilter(fetchXmlFilter, DEVICE_TABLE);
+        };
+
+        deviceLookupControl.addPreSearch(filterFunction);
+    }
+
+
+
+    function applyBatteryItemFilter(formContext: Xrm.FormContext): void {
+        const batteryLookupControl = formContext.getControl(ASSEMBLY_PROCESS_BATTERY_BPF_CONTROL) as Xrm.Controls.LookupControl;
+
+        if (!batteryLookupControl) {
+            return;
+        }
+
+        const filterFunction = () => {
+            const fetchXmlFilter = `
+                <filter type="and">
+                    <condition attribute="${ITEM_PRODUCT_TYPE_LOOKUP}" operator="eq" value="${PRODUCT_TYPES_IDS.BATTERY}" />
+                </filter>
+            `;
+
+            batteryLookupControl.addCustomFilter(fetchXmlFilter, ITEM_TABLE);
+        };
+
+        batteryLookupControl.addPreSearch(filterFunction);
+    }
+
+    function applyConnectorItemFilter(formContext: Xrm.FormContext): void {
+        const connectorLookupControl = formContext.getControl(ASSEMBLY_PROCESS_CONNECTOR_BPF_CONTROL) as Xrm.Controls.LookupControl;
+
+        if (!connectorLookupControl) {
+            return;
+        }
+
+        const filterFunction = () => {
+            const fetchXmlFilter = `
+                <filter type="and">
+                    <condition attribute="${ITEM_PRODUCT_TYPE_LOOKUP}" operator="eq" value="${PRODUCT_TYPES_IDS.CONNECTOR}" />
+                </filter>
+            `;
+
+            connectorLookupControl.addCustomFilter(fetchXmlFilter, ITEM_TABLE);
+        };
+
+        connectorLookupControl.addPreSearch(filterFunction);
+    }
 }
