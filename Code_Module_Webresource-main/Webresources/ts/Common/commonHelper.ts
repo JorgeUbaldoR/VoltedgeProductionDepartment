@@ -32,20 +32,14 @@ namespace Common.Helper {
     return await Xrm.Navigation.openAlertDialog(alertStrings);
   }
 
-/**
-   * Mostra uma notificação no canto do ecrã (Toast).
-   * @param message A mensagem a apresentar.
-   * @param level 1 = Success, 2 = Error, 3 = Warning, 4 = Info (Por defeito é 4)
-   */
-  export async function createAndShowToastNotification(message: string, level: 1 | 2 | 3 | 4 = 4): Promise<string> {
-    
-    const notification = {
-      type: 2, 
-      level: level, 
-      message: message
-    };
 
-    return await Xrm.App.addGlobalNotification(notification);
+  /**
+   * Mostra uma barra de notificação no topo do formulário.
+   * @param level "ERROR" | "INFO" | "WARNING"
+   * @param uniqueId Um ID à tua escolha (ex: "aviso_readonly") para poderes apagar a notificação mais tarde.
+   */
+  export function showFormNotification(formContext: Xrm.FormContext, message: string, level: "ERROR" | "INFO" | "WARNING", uniqueId: string): void {
+    formContext.ui.setFormNotification(message, level, uniqueId);
   }
 
 }

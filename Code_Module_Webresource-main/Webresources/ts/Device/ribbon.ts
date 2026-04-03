@@ -19,8 +19,8 @@ namespace Device.Ribbon {
     const SERVICE_REQUEST_SERVICE_TYPE = 'vtd_servicetypeid';
     const SERVICE_REQUEST_TITLE = 'vtd_title';
     const SERVICE_REQUEST_DEVICE = 'vtd_deviceid';
-    const SERVICE_REQUEST_REQUESTOR_LOOKUP = 'vtd_requestorid';
     const SERVICE_REQUEST_AUTOMATICALLY_CREATED_FLAG = 'vtd_automaticallycreatedflag';
+    const SERVICE_REQUEST_ON_POP_VIEW = 'vtd_onpopupview';
 
     // Service Type Constants
     const SERVICE_TYPE_TABLE = 'vtd_servicetype'; 
@@ -34,6 +34,7 @@ namespace Device.Ribbon {
     const REPLACEMENT_SERVICE_REQUEST_NEW_DEVICE_LOOKUP = 'vtd_olddeviceid';
     const REPLACEMENT_STATUS_REASON = 'statuscode';
     const REPLACEMENT_AUTOMATICALLY_CREATED_FLAG = 'vtd_automaticallycreated';
+    const REPLACEMENT_ON_POP_VIEW = 'vtd_onpopupview';
 
     const REPLACEMENT_STATUS_REASON_TYPES = {
         AWAITING_APPROVAL: 953180002,
@@ -70,6 +71,19 @@ namespace Device.Ribbon {
 
                     await formContext.data.refresh(false);
                     await Common.Helper.createAndShowAlertDialog('OK', 'Service Request and Replacement scheduled successfully!', 'Replacement Service Request');
+                }else{
+                    Xrm.Utility.showProgressIndicator('Cancelling process and cleaning up...');
+
+                    await Xrm.WebApi.deleteRecord(SERVICE_TABLE, createdServiceRequestId);
+                    
+                    Xrm.Utility.closeProgressIndicator();
+                    
+                    // Avisamos o utilizador do que aconteceu
+                    await Common.Helper.createAndShowAlertDialog(
+                        'Understood', 
+                        'The operation was cancelled. The Service Request was discarded because the Replacement was not completed.', 
+                        'Process Cancelled'
+                    );
                 }
                 
             } else {
@@ -81,7 +95,6 @@ namespace Device.Ribbon {
     async function openServiceRequestPopup(formContext: Xrm.FormContext, deviceId: string): Promise<string | null> {
         const deviceUniqueCode = formContext.getAttribute(DEVICE_UNIQUE_CODE)?.getValue() ?? deviceId;
         const currentUserName = Xrm.Utility.getGlobalContext().userSettings.userName;
-        const currentUserId = Xrm.Utility.getGlobalContext().userSettings.userId.replace(/[{}]/g, "").toLowerCase();
 
         // Pré-preenchimento dos campos para o novo Service Request
         const formParameters: any = {
@@ -102,7 +115,8 @@ namespace Device.Ribbon {
                 entityType: SERVICE_TYPE_TABLE 
             }],
 
-            [SERVICE_REQUEST_AUTOMATICALLY_CREATED_FLAG]: true
+            [SERVICE_REQUEST_AUTOMATICALLY_CREATED_FLAG]: true,
+            [SERVICE_REQUEST_ON_POP_VIEW]: true
 
         };
 
@@ -150,7 +164,8 @@ namespace Device.Ribbon {
             [REPLACEMENT_DESCRIPTION]: `Replacement task for device ${deviceUniqueCode}.`,
             [REPLACEMENT_STATUS_REASON]: REPLACEMENT_STATUS_REASON_TYPES.AWAITING_APPROVAL,
             [REPLACEMENT_REASON]: `Replacement initiated due to issues found in device ${deviceUniqueCode}. Please review the associated Service Request for more details.`,
-            [REPLACEMENT_AUTOMATICALLY_CREATED_FLAG]: true
+            [REPLACEMENT_AUTOMATICALLY_CREATED_FLAG]: true,
+            [REPLACEMENT_ON_POP_VIEW]: true
         };
 
         const pageInput: Xrm.Navigation.PageInputEntityRecord = {
