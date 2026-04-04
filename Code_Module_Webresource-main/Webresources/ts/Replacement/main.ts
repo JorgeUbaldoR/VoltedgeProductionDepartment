@@ -18,7 +18,6 @@ namespace Replacement.Main {
         if (formType === Common.Helper.FORM_TYPES.CREATE) {
             (formContext.getControl(REPLACEMENT_SERVICE_REQUEST_OLD_DEVICE_LOOKUP) as Xrm.Controls.LookupControl)?.setDisabled(true);
             (formContext.getControl(REPLACEMENT_SERVICE_REQUEST_LOOKUP) as Xrm.Controls.LookupControl)?.setDisabled(true);
-            
             return;
         } 
 
@@ -32,7 +31,7 @@ namespace Replacement.Main {
             needsUpdate = true;
         }
 
-        if (automaticallyCreatedValue) {
+        if (automaticallyCreatedValue && !onPopupViewValue) {
             Common.Helper.showFormNotification(
                 formContext, 
                 'This record has automatically populated data, please review and edit it.', 
@@ -49,6 +48,7 @@ namespace Replacement.Main {
             try {
                 await Xrm.WebApi.updateRecord(REPLACEMENT_TABLE, recordId, dataToUpdate);
             } catch (error) {
+                console.error("Erro ao limpar flags do Replacement:", error);
             }
         }
     }

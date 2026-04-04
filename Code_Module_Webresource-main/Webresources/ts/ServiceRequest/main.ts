@@ -30,7 +30,6 @@ namespace ServiceRequest.Main {
             return; 
         } 
 
- 
         const recordId = formContext.data.entity.getId().replace(/[{}]/g, "");
         let dataToUpdate: any = {};
         let needsUpdate = false;
@@ -41,7 +40,7 @@ namespace ServiceRequest.Main {
             needsUpdate = true;
         }
 
-        if (automaticallyCreatedValue) {
+        if (automaticallyCreatedValue && !onPopupViewValue) {
             Common.Helper.showFormNotification(
                 formContext, 
                 'This record has automatically populated data, please review and edit it.', 
