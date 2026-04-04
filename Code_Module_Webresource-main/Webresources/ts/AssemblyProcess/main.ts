@@ -5,6 +5,8 @@ namespace AssemblyProcess.Main {
     const PRODUCT_TYPE_ATTRIBUTE = "vtd_producttypeid";
     const ASSEMBLY_PROCESS_BATTERYID_LOOKUP = "vtd_batteryid";
     const ASSEMBLY_PROCESS_CONNECTOR_LOOKUP = "vtd_connectorid";
+    const ASSEMBLY_PROCESS_ASSEMBLY_LINE_LOOKUP = "vtd_assemblylineid";
+    const ASSEMBLY_PROCESS_DEVICE_LOOKUP = "vtd_deviceid";
 
     const ASSEMBLY_PROCESS_PRODUCT_TYPE_BPF_CONTROL = "header_process_vtd_producttypeid";
     const ASSEMBLY_PROCESS_BPF_CONTROL = "header_process_vtd_assemblylineid";
@@ -12,12 +14,14 @@ namespace AssemblyProcess.Main {
     const ASSEMBLY_PROCESS_BATTERY_BPF_CONTROL = "header_process_vtd_batteryid"; 
     const ASSEMBLY_PROCESS_CONNECTOR_BPF_CONTROL = "header_process_vtd_connectorid";
 
+    const DEVICE_STATUS_REASON_HEADER_CONTROL = "header_statuscode";
+
     const ASSEMBLY_PROCESS_STATUS_REASON_TYPES = {
         IDENTIFICATION: 953180001,
         EV_CHARGER_PRODUCTION: 953180002,
-        BATTERY_PRODUCTION: 953180003,
-        FINAL_ITEM: 953180004,
-        CASE_REPORT: 953180005
+        BATTERY_PRODUCTION: 953180002,
+        FINAL_ITEM: 953180003,
+        CASE_REPORT: 953180004
     }
 
     const ASSEMBLY_PROCESS_BPF_STAGES = {
@@ -71,7 +75,7 @@ namespace AssemblyProcess.Main {
         const formContext = executionContext.getFormContext();
         
         const process = formContext.data.process;
-
+        
         if (process) {
             process.addOnStageChange(onStageChange);
             handleBpfStageLogic(formContext);
@@ -83,6 +87,28 @@ namespace AssemblyProcess.Main {
         applyBatteryItemFilter(formContext);
         applyConnectorItemFilter(formContext);
 
+        const statusReasonControl = formContext.getControl(DEVICE_STATUS_REASON_HEADER_CONTROL) as Xrm.Controls.OptionSetControl;
+       
+        if(statusReasonControl) {
+            statusReasonControl.setDisabled(true);
+        }
+
+        formContext.getAttribute(INDUSTRIAL_PLANT_ATTRIBUTE)?.addOnChange(onPlantOrProductChange);
+        formContext.getAttribute(PRODUCT_TYPE_ATTRIBUTE)?.addOnChange(onPlantOrProductChange);
+        formContext.getAttribute(ASSEMBLY_PROCESS_ASSEMBLY_LINE_LOOKUP)?.addOnChange(onAssemblyLineChange);
+    }
+
+    function onPlantOrProductChange(executionContext: Xrm.Events.EventContext): void {
+        const formContext = executionContext.getFormContext();
+        
+        formContext.getAttribute(ASSEMBLY_PROCESS_ASSEMBLY_LINE_LOOKUP)?.setValue(null);
+        formContext.getAttribute(ASSEMBLY_PROCESS_DEVICE_LOOKUP)?.setValue(null);
+    }
+
+    function onAssemblyLineChange(executionContext: Xrm.Events.EventContext): void {
+        const formContext = executionContext.getFormContext();
+        
+        formContext.getAttribute(ASSEMBLY_PROCESS_DEVICE_LOOKUP)?.setValue(null);
     }
 
     function onStageChange(executionContext: Xrm.Events.EventContext): void {
@@ -112,6 +138,8 @@ namespace AssemblyProcess.Main {
 
             case ASSEMBLY_PROCESS_BPF_STAGES.EV_CHARGER_PRODUCTION: 
                 formContext.getAttribute(ASSEMBLY_PROCESS_STATUS_REASON)?.setValue(ASSEMBLY_PROCESS_STATUS_REASON_TYPES.EV_CHARGER_PRODUCTION);
+                showConnectorAndBatteryFields(formContext);
+                
                 // Fase 2: Mostra a secção 1 e 2
                 tab?.sections.get(FORM_SECTIONS.IDENTIFICATION)?.setVisible(true);
                 tab?.sections.get(FORM_SECTIONS.EV_CHARGER_PRODUCTION)?.setVisible(true);
@@ -119,6 +147,8 @@ namespace AssemblyProcess.Main {
 
             case ASSEMBLY_PROCESS_BPF_STAGES.BATTERY_PRODUCTION: 
                 formContext.getAttribute(ASSEMBLY_PROCESS_STATUS_REASON)?.setValue(ASSEMBLY_PROCESS_STATUS_REASON_TYPES.BATTERY_PRODUCTION);
+                hideAndClearConnectorAndBatteryFields(formContext);
+
                 // Fase 2 (Alternativa): Mostra a secção 1 e 2
                 tab?.sections.get(FORM_SECTIONS.IDENTIFICATION)?.setVisible(true);
                 tab?.sections.get(FORM_SECTIONS.BATTERY_PRODUCTION)?.setVisible(true);
@@ -145,6 +175,36 @@ namespace AssemblyProcess.Main {
                 break;
         }
     }
+
+    function showConnectorAndBatteryFields(formContext: Xrm.FormContext): void {
+        const batteryControl = formContext.getControl(ASSEMBLY_PROCESS_BATTERYID_LOOKUP) as Xrm.Controls.LookupControl;
+        const connectorControl = formContext.getControl(ASSEMBLY_PROCESS_CONNECTOR_LOOKUP) as Xrm.Controls.LookupControl;
+        
+        if (!connectorControl || !batteryControl) return;
+
+        connectorControl.setVisible(true);
+        batteryControl.setVisible(true);
+    }
+
+function hideAndClearConnectorAndBatteryFields(formContext: Xrm.FormContext): void {
+        const batteryControl = formContext.getControl(ASSEMBLY_PROCESS_BATTERYID_LOOKUP) as Xrm.Controls.LookupControl;
+        const connectorControl = formContext.getControl(ASSEMBLY_PROCESS_CONNECTOR_LOOKUP) as Xrm.Controls.LookupControl;
+        const batteryAttribute = formContext.getAttribute(ASSEMBLY_PROCESS_BATTERYID_LOOKUP) as Xrm.Attributes.LookupAttribute;
+        const connectorAttribute = formContext.getAttribute(ASSEMBLY_PROCESS_CONNECTOR_LOOKUP) as Xrm.Attributes.LookupAttribute;
+        
+        // Esconde e limpa o Connector (se existir)
+        if (connectorControl && connectorAttribute) {
+            connectorControl.setVisible(false);
+            connectorAttribute.setValue(null);
+        }
+
+        // Esconde e limpa a Battery (se existir)
+        if (batteryControl && batteryAttribute) {
+            batteryControl.setVisible(false);
+            batteryAttribute.setValue(null);
+        }
+    }
+
 
     function hideAllStageSections(formContext: Xrm.FormContext): void {
         const tab = formContext.ui.tabs.get(FORM_TABS.GENERAL);
