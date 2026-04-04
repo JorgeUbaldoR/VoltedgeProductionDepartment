@@ -1,6 +1,8 @@
 {
     "compilerOptions": {
-      "moduleResolution": "Node",
+      "ignoreDeprecations": "6.0",
+      "types": ["xrm"],
+      "moduleResolution": "node",
       "noImplicitAny": false,
       "noEmitOnError": true,
       "removeComments": false,
